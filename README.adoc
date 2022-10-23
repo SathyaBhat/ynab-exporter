@@ -1,0 +1,15 @@
+= ynab-sync
+
+This is a TypeScript CLI project by Sathyajith Bhat (sathya@sathyasays.com)
+
+== Requirements
+
+You need a working https://nodejs.org/en/[Node.js] installation.
+
+== Build
+
+After downloading this project, run `npm install` to download all libraries. `npm build` will build the current project, and `npm release` will build a production version.
+
+== Container
+
+You can use Docker or Podman to build the container image decribed in the `Dockerfile`.
