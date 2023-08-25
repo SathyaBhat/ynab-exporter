@@ -1,34 +1,17 @@
 import * as ynab from "ynab";
-import { Account } from "ynab";
-export class YNAB {
-  private privateAccessToken = process.env.YNAB_TOKEN!;
-  private ausBudgetId = process.env.BUDGET_ID!;
-  private amexAccountId = process.env.ACCOUNT_ID!;
-  private i: number = 0;
-  public ynabAPI = new ynab.API(this.privateAccessToken);
+import {Account} from "ynab";
+import {TransactionsResponse} from "ynab";
 
-  private getPayeeName(payeeId: string) {
-    return "";
-  }
-  public async getYnabTransactions() {
-    try {
-      const transactions = await this.ynabAPI.transactions.getTransactionsByAccount(
-        this.ausBudgetId,
-        this.amexAccountId,
-        "2022-11-12"
-      );
-      return transactions;
-    } catch (error) {
-      console.log(error);
-    }
-  }
+export type ynabTransactionResponse = (TransactionsResponse & {rateLimit: string | null;}) | undefined;
+export const ynabBudgetId = process.env.BUDGET_ID!;
+export async function ynabClient(): Promise<ynab.API> {
 
-  public async getYnabAccounts() {
-    try {
-      const accounts = await this.ynabAPI.accounts.getAccounts(this.ausBudgetId);
-      return accounts.data.accounts;
-    } catch (error) {
-      console.error(`Couldn't fetch accounts due to ${error}`);
-    }
-  }
+  const accessToken = process.env.YNAB_TOKEN!;
+  return new ynab.API(accessToken);
 }
+
+export async function getAccountBalances(client: ynab.API) {
+  const accounts = await client.accounts.getAccounts(ynabBudgetId);
+  return accounts.data.accounts;
+}
+

@@ -1,30 +1,42 @@
-import { Command } from "commander";
-import { parseAmexStatement } from "./parse";
-import { YNAB } from "./ynab";
-import { DB } from "./db";
+
+import {ynabClient, getAccountBalances} from "./ynab";
+import {Gauge, Registry, collectDefaultMetrics} from "prom-client";
+import express, {Express, Request, Response} from 'express';
+
 
 async function main() {
-  const program = new Command();
-  program
-    .description("Validates transactions from statements are in YNAB")
-    .option("-l, --last-date <value> Last date to go back to and fetch")
-    .option("-s, --statement-date <value> Last date to go back to in the statement")
-    .parse(process.argv);
+  const app: Express = express();
+  const port = process.env.PORT;
+  app.get('/metrics', (req: Request, res: Response) => {
+    res.setHeader('Content-Type', register.contentType);
+    register.metrics().then(data => res.status(200).send(data));
+  });
+  const ynab = await ynabClient();
+  const register = new Registry();
 
-  const options = program.opts();
-  const ynab = new YNAB();
-  const db = new DB();
+  collectDefaultMetrics({register});
+  const accountBalanceGauge = new Gauge({
+    name: "ynab_account_balance",
+    help: "Account Balance amounts",
+    labelNames: ["accountName"],
+    async collect() {
 
-  const ynabAccounts = await ynab.getYnabAccounts();
-  console.log("Found following accounts:");
-  for (const account of ynabAccounts!) {
-    console.log(`\t ${account.name}`);
-  }
-  const ynabTransactions = await ynab.getYnabTransactions();
-  for (const transaction of ynabTransactions!.data!.transactions) {
-    // console.log(` ${transaction.id} ${transaction.amount} for ${transaction.payee_name} (${transaction.memo})`);
-    db.saveTransaction(transaction);
-  }
+      const accountBalances = await getAccountBalances(ynab);
+      accountBalances.forEach(a => {
+        accountBalanceGauge.labels({accountName: a.name}).set(a.cleared_balance);
+      });
+    }
+
+  });
+  register.registerMetric(accountBalanceGauge);
+
+  app.listen(9100, () => {
+    console.log('⚡ Hello');
+  });
 }
 
-main();
+if (require.main === module) {
+  console.log('Starting YNAB Exporter 💰💸');
+  main();
+}
+

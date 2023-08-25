@@ -1,3 +1,3 @@
-### ynab-validate
+### ynab-exporter
 
-TypeScript program that reads transactions from YNAB, from your account statement and validates that transaction from your statement is present/entered in YNAB.
+A simple Prometheus exporter for You Need A Budget (YNAB) budgeting data.
