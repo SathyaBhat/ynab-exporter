@@ -10,7 +10,7 @@ export async function ynabClient(): Promise<ynab.API> {
   return new ynab.API(accessToken);
 }
 
-export async function getAccountBalances(client: ynab.API) {
+export async function getAccountBalances(client: ynab.API): Promise<Account[]> {
   const accounts = await client.accounts.getAccounts(ynabBudgetId);
   return accounts.data.accounts;
 }

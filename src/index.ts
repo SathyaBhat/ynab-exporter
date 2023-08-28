@@ -1,36 +1,24 @@
 
-import {ynabClient, getAccountBalances} from "./ynab";
-import {Gauge, Registry, collectDefaultMetrics} from "prom-client";
+import {ynabClient} from "./ynab";
+import {Registry} from "prom-client";
 import express, {Express, Request, Response} from 'express';
-
+import {collectAccountBalanceValues} from "./accounts";
 
 async function main() {
+  const ynab = await ynabClient();
+  const registry = new Registry();
   const app: Express = express();
   const port = process.env.PORT;
   app.get('/metrics', (req: Request, res: Response) => {
-    res.setHeader('Content-Type', register.contentType);
-    register.metrics().then(data => res.status(200).send(data));
+    res.setHeader('Content-Type', registry.contentType);
+    registry.metrics().then(data => res.status(200).send(data));
   });
-  const ynab = await ynabClient();
-  const register = new Registry();
 
-  collectDefaultMetrics({register});
-  const accountBalanceGauge = new Gauge({
-    name: "ynab_account_balance",
-    help: "Account Balance amounts",
-    labelNames: ["accountName"],
-    async collect() {
 
-      const accountBalances = await getAccountBalances(ynab);
-      accountBalances.forEach(a => {
-        accountBalanceGauge.labels({accountName: a.name}).set(a.cleared_balance);
-      });
-    }
+  // collectDefaultMetrics({register});
+  collectAccountBalanceValues(ynab, registry);
 
-  });
-  register.registerMetric(accountBalanceGauge);
-
-  app.listen(9100, () => {
+  app.listen(port || 9100, () => {
     console.log('⚡ Hello');
   });
 }
