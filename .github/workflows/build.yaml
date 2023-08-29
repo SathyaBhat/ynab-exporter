@@ -1,0 +1,22 @@
+name: Build Docker
+on: [push]
+
+jobs:
+
+  docker-build:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Build Docker Image
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      run: |
+        docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+        docker build -t ${DOCKER_USERNAME}/ynab-exporter:${GITHUB_SHA} -t ${DOCKER_USERNAME}/ynab-exporter:latest .
+        docker push ${DOCKER_USERNAME}/ynab-exporter -a
