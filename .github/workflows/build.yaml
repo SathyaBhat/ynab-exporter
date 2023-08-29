@@ -19,4 +19,4 @@ jobs:
       run: |
         docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
         docker build -t ${DOCKER_USERNAME}/ynab-exporter:${GITHUB_SHA} -t ${DOCKER_USERNAME}/ynab-exporter:latest .
-        docker push ${DOCKER_USERNAME}/ynab-exporter:${GITHUB_SHA} ${DOCKER_USERNAME}/ynab-exporter:latest
+        docker push -a
