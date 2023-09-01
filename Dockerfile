@@ -15,5 +15,5 @@ RUN npm install --production
 # Step 2: Runtime image
 FROM astefanutti/scratch-node:14.14.0
 COPY --from=builder /command/node_modules /app/node_modules
-COPY --from=builder /command/dist/*.js /app/
+COPY --from=builder /command/dist/ /app/
 ENTRYPOINT ["node", "/app/index.js"]
