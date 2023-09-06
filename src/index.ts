@@ -1,37 +1,37 @@
 
 
 
-import {Registry, Gauge, collectDefaultMetrics} from "prom-client";
-import express, {Express, Request, Response} from 'express';
-import {YNABMetrics} from "./collectors";
-import {scheduledAccountBalanceUpdate} from "./jobs/accounts";
-
 import {CronJob} from 'cron';
-import {Account} from "ynab";
-import {ynabClient} from "./api";
-
+import express, {Express, Request, Response} from 'express';
+import {Registry} from "prom-client";
+import 'source-map-support/register';
+import {YnabAPI} from "./api";
+import {YNABCollector} from "./collectors";
+import {scheduledAccountBalanceUpdate} from "./jobs/accounts";;
 
 
 async function main() {
-  const ynab = await ynabClient();
+  const ynab = new YnabAPI();
   const register = new Registry();
-  const port = process.env.PORT;
+
+  const port = process.env.PORT || 9100;
   const app: Express = express();
-  const ynabMetrics = new YNABMetrics();
+  const ynabCollector = new YNABCollector();
 
   new CronJob({
     cronTime: "0 * * * * ",
     onTick: async () => {
-      ynabMetrics.accountBalances = (await scheduledAccountBalanceUpdate(ynab)).accounts;
-      console.log(`${ynabMetrics.accountBalances.length} accounts refreshed`);
+      ynabCollector.accountBalances = (await scheduledAccountBalanceUpdate(ynab)).accounts;
+      console.log(`${ynabCollector.accountBalances.length} accounts refreshed`);
     },
     start: true,
     runOnInit: true
   });
 
-
-  ynabMetrics.collectAccountBalanceMetrics(register);
-
+  register.setDefaultLabels({
+    budget_name: await ynab.getAccountName()
+  });
+  ynabCollector.collectAccountBalanceMetrics(register);
 
   app.get('/metrics', async (req: Request, res: Response) => {
     res.setHeader('Content-Type', register.contentType);
@@ -40,8 +40,8 @@ async function main() {
     res.send(results);
   });
 
-  app.listen(port || 9100, () => {
-    console.log('⚡ Hello');
+  app.listen(port, () => {
+    console.log(`🔊 Publishing metrics on port ${port}`);
   });
 }
 

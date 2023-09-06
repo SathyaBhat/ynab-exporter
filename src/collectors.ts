@@ -1,15 +1,13 @@
 import {Gauge, Registry} from "prom-client";
 import {Account} from "ynab";
 
-
-export class YNABMetrics {
+export class YNABCollector {
     accountBalances: Account[] = [];
-
 
     public async collectAccountBalanceMetrics(register: Registry) {
         console.log('Collecting account balance metrics..');
 
-        const accountLabels = ['account_name', 'type'];
+        const accountLabels = ['account_name', 'type', 'closed'];
         const accountClearedBalanceGauge = new Gauge({
             name: "ynab_cleared_account_balance",
             registers: [register],
@@ -18,7 +16,7 @@ export class YNABMetrics {
             collect: async () => {
                 console.log(`Collecting Cleared Balance for ${this.accountBalances.length} accounts`);
                 this.accountBalances.forEach(a => {
-                    accountClearedBalanceGauge.labels({account_name: a.name, type: a.type}).set(a.cleared_balance / 1000);
+                    accountClearedBalanceGauge.labels({account_name: a.name, type: a.type, closed: String(a.closed)}).set(a.cleared_balance / 1000);
                 });
             }
 
@@ -31,7 +29,7 @@ export class YNABMetrics {
             collect: async () => {
                 console.log(`Collecting Uncleared Balance for ${this.accountBalances.length} accounts`);
                 this.accountBalances.forEach(a => {
-                    accountUnClearedBalanceGauge.labels({account_name: a.name, type: a.type}).set(a.uncleared_balance / 1000);
+                    accountUnClearedBalanceGauge.labels({account_name: a.name, type: a.type, closed: String(a.closed)}).set(a.uncleared_balance / 1000);
                 });
             }
 

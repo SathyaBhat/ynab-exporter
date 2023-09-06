@@ -1,6 +1,15 @@
 import {API} from "ynab";
 
-export async function ynabClient(): Promise<API> {
-    const accessToken = process.env.YNAB_TOKEN!;
-    return new API(accessToken);
+export class YnabAPI {
+    private accessToken = process.env.YNAB_TOKEN!;
+    public client: API;
+    public budgetId: string = process.env.BUDGET_ID!;
+
+    constructor() {
+        this.client = new API(this.accessToken);
+    }
+
+    public async getAccountName(): Promise<string> {
+        return (await this.client.budgets.getBudgetById(this.budgetId)).data.budget.name;
+    }
 }
