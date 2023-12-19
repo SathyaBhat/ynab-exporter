@@ -7,8 +7,8 @@ import {Registry} from "prom-client";
 import 'source-map-support/register';
 import {YnabAPI} from "./api";
 import {YNABCollector} from "./collectors";
-import {scheduledAccountBalanceUpdate} from "./jobs/accounts";;
-
+import {scheduledAccountBalanceUpdate} from "./jobs/accounts";
+import log, {LogLevelDesc} from 'loglevel';
 
 async function main() {
   const ynab = new YnabAPI();
@@ -22,7 +22,7 @@ async function main() {
     cronTime: "*/15 * * * *",
     onTick: async () => {
       ynabCollector.accountBalances = (await scheduledAccountBalanceUpdate(ynab)).accounts;
-      console.log(`${ynabCollector.accountBalances.length} accounts refreshed`);
+      log.info(`${ynabCollector.accountBalances.length} accounts refreshed`);
     },
     start: true,
     runOnInit: true
@@ -35,17 +35,19 @@ async function main() {
 
   app.get('/metrics', async (req: Request, res: Response) => {
     res.setHeader('Content-Type', register.contentType);
-    console.debug('getting metrics');
+    log.debug('getting metrics');
     const results = await register.metrics();
     res.send(results);
   });
 
   app.listen(port, () => {
-    console.log(`🔊 Publishing metrics on port ${port}`);
+    log.info(`🔊 Publishing metrics on port ${port}`);
   });
 }
 
 if (require.main === module) {
-  console.log('Starting YNAB Exporter 💰💸');
+  const logLevel = (process.env.LOG_LEVEL) as LogLevelDesc || 'info';
+  log.setLevel(logLevel);
+  log.info('Starting YNAB Exporter 💰💸');
   main();
 }
