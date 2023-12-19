@@ -19,7 +19,7 @@ async function main() {
   const ynabCollector = new YNABCollector();
 
   new CronJob({
-    cronTime: "0 * * * * ",
+    cronTime: "*/15 * * * *",
     onTick: async () => {
       ynabCollector.accountBalances = (await scheduledAccountBalanceUpdate(ynab)).accounts;
       console.log(`${ynabCollector.accountBalances.length} accounts refreshed`);
@@ -35,7 +35,7 @@ async function main() {
 
   app.get('/metrics', async (req: Request, res: Response) => {
     res.setHeader('Content-Type', register.contentType);
-    console.log('getting metrics');
+    console.debug('getting metrics');
     const results = await register.metrics();
     res.send(results);
   });

@@ -14,7 +14,7 @@ export class YNABCollector {
             help: "Account Cleared Balance amounts",
             labelNames: accountLabels,
             collect: async () => {
-                console.log(`Collecting Cleared Balance for ${this.accountBalances.length} accounts`);
+                console.debug(`Collecting Cleared Balance for ${this.accountBalances.length} accounts`);
                 this.accountBalances.forEach(a => {
                     accountClearedBalanceGauge.labels({account_name: a.name, type: a.type, closed: String(a.closed)}).set(a.cleared_balance / 1000);
                 });
@@ -27,7 +27,7 @@ export class YNABCollector {
             registers: [register],
             labelNames: accountLabels,
             collect: async () => {
-                console.log(`Collecting Uncleared Balance for ${this.accountBalances.length} accounts`);
+                console.debug(`Collecting Uncleared Balance for ${this.accountBalances.length} accounts`);
                 this.accountBalances.forEach(a => {
                     accountUnClearedBalanceGauge.labels({account_name: a.name, type: a.type, closed: String(a.closed)}).set(a.uncleared_balance / 1000);
                 });
