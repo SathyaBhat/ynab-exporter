@@ -4,11 +4,12 @@
 import {CronJob} from 'cron';
 import express, {Express, Request, Response} from 'express';
 import {Registry} from "prom-client";
-import 'source-map-support/register';
 import {YnabAPI} from "./api";
 import {YNABCollector} from "./collectors";
-import {scheduledAccountBalanceUpdate} from "./jobs/accounts";
+import {scheduledAccountBalanceUpdate, scheduledCategoryBalanceUpdate} from "./jobs/accounts";
 import log, {LogLevelDesc} from 'loglevel';
+
+import 'source-map-support/register';
 
 async function main() {
   const ynab = new YnabAPI();
@@ -23,6 +24,10 @@ async function main() {
     onTick: async () => {
       ynabCollector.accountBalances = (await scheduledAccountBalanceUpdate(ynab)).accounts;
       log.info(`${ynabCollector.accountBalances.length} accounts refreshed`);
+
+      ynabCollector.categoryBalance = (await scheduledCategoryBalanceUpdate(ynab));
+      log.info(`${ynabCollector.categoryBalance.length} categories refreshed`);
+
     },
     start: true,
     runOnInit: true
@@ -32,7 +37,7 @@ async function main() {
     budget_name: await ynab.getAccountName()
   });
   ynabCollector.collectAccountBalanceMetrics(register);
-
+  ynabCollector.collectCategoryBalanceMetrics(register);
   app.get('/metrics', async (req: Request, res: Response) => {
     res.setHeader('Content-Type', register.contentType);
     log.debug('getting metrics');

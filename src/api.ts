@@ -1,4 +1,5 @@
-import {API} from "ynab";
+import log, {LogLevelDesc} from 'loglevel';
+import {API, Category} from "ynab";
 
 export class YnabAPI {
     private accessToken = process.env.YNAB_TOKEN!;
@@ -11,5 +12,12 @@ export class YnabAPI {
 
     public async getAccountName(): Promise<string> {
         return (await this.client.budgets.getBudgetById(this.budgetId)).data.budget.name;
+    }
+
+    public async getCategoryBudgets(): Promise<Category[]> {
+        const catGroups = (await this.client.categories.getCategories(this.budgetId)).data.category_groups;
+        const categories = (catGroups.map(g => g.categories)).flat(1);
+        log.debug(`Got ${categories.length} categories`);
+        return categories;
     }
 }
