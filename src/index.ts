@@ -2,47 +2,41 @@
 
 
 import {CronJob} from 'cron';
+import dotenv from "dotenv";
 import express, {Express, Request, Response} from 'express';
-import {Registry} from "prom-client";
+import log, {LogLevelDesc} from 'loglevel';
+import 'source-map-support/register';
 import {YnabAPI} from "./api";
 import {YNABCollector} from "./collectors";
 import {scheduledAccountBalanceUpdate, scheduledCategoryBalanceUpdate} from "./jobs/accounts";
-import log, {LogLevelDesc} from 'loglevel';
-
-import 'source-map-support/register';
+import {registry} from './metrics';
 
 async function main() {
+  dotenv.config();
   const ynab = new YnabAPI();
-  const register = new Registry();
 
   const port = process.env.PORT || 9100;
   const app: Express = express();
   const ynabCollector = new YNABCollector();
+  const budgetName = await ynab.getAccountName();
 
   new CronJob({
     cronTime: "*/15 * * * *",
     onTick: async () => {
-      ynabCollector.accountBalances = (await scheduledAccountBalanceUpdate(ynab)).accounts;
-      log.info(`${ynabCollector.accountBalances.length} accounts refreshed`);
-
-      ynabCollector.categoryBalance = (await scheduledCategoryBalanceUpdate(ynab));
-      log.info(`${ynabCollector.categoryBalance.length} categories refreshed`);
-
+      log.info(`Refreshing YNAB data at ${new Date().toLocaleString()}...`);
+      const accountBalance = await scheduledAccountBalanceUpdate(ynab);
+      const catBalance = await scheduledCategoryBalanceUpdate(ynab);
+      ynabCollector.collectAccountBalanceMetrics(budgetName, accountBalance.data.accounts);
+      ynabCollector.collectCategoryBalanceMetrics(budgetName, catBalance);
     },
     start: true,
     runOnInit: true
   });
 
-  register.setDefaultLabels({
-    budget_name: await ynab.getAccountName()
-  });
-  ynabCollector.collectAccountBalanceMetrics(register);
-  ynabCollector.collectCategoryBalanceMetrics(register);
+
   app.get('/metrics', async (req: Request, res: Response) => {
-    res.setHeader('Content-Type', register.contentType);
-    log.debug('getting metrics');
-    const results = await register.metrics();
-    res.send(results);
+    res.setHeader('Content-Type', registry.contentType);
+    res.send(await registry.metrics());
   });
 
   app.listen(port, () => {
