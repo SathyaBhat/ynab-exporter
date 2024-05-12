@@ -1,4 +1,3 @@
-import log from 'loglevel';
 import {Account, Category} from "ynab";
 import * as metrics from './metrics';
 
