@@ -17,6 +17,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@honeycombio/opentelemetry-node": "^0.7.2",
+    "@opentelemetry/auto-instrumentations-node": "^0.46.0",
     "cron": "^2.4.3",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",

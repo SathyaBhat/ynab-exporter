@@ -1,4 +1,4 @@
-import {Gauge, Registry, collectDefaultMetrics} from "prom-client";
+import {Gauge, Registry} from "prom-client";
 
 const catLabels = ['name', 'category_group_name', 'budgeted_amount', 'activity_amount', 'balance_amount', 'hidden', 'deleted', 'budget_name'];
 const accountLabels = ['budget_name', 'account_name', 'type', 'closed'];
